@@ -1,0 +1,61 @@
+<!-- Google tag (gtag.js) -->
+<script
+  async
+  src="https://www.googletagmanager.com/gtag/js?id=G-FGHNPTZDMQ"
+></script>
+<script>
+  window.dataLayer = window.dataLayer || []
+  function gtag() {
+    dataLayer.push(arguments)
+  }
+  gtag('js', new Date())
+
+  gtag('config', 'G-FGHNPTZDMQ')
+</script>
+
+{% if first_time_accessed %}
+<script>
+  (function(){
+      window.dataLayer = window.dataLayer || [];
+
+      // Totals
+      let shipping_price = '{{ shipping_price | money_without_currency }}';
+      shipping_price = shipping_price.replace(",", ".");
+
+      let total_price = '{{ total_price | money_without_currency }}';
+      total_price = total_price.replace(",", ".");
+
+      let tax_price = '{{ tax_price | money_without_currency }}';
+      tax_price = tax_price.replace(",", ".");
+
+      let items = [];
+
+      {% for line_item in checkout.line_items %}
+          items.push({
+              item_id: '{{ line_item.sku }}',
+              item_name: '{{ line_item.title | remove: "'" | remove: '"'}}',
+              price: {{ line_item.final_price | times: 0.01 }},
+              quantity: {{ line_item.quantity }}
+          });
+      {% endfor %}
+
+      let coupon = '';
+      {% if checkout.discount_applications.size > 0 %}
+            {% for discount in checkout.discount_applications %}
+                coupon = discount.code | " ";
+            {% endfor %}
+            coupon = coupon | trim;
+      {% endif %}
+
+      gtag("event", "purchase", {
+              transaction_id: "{{ checkout.order_id }}",
+              currency: "{{ checkout.currency }}",
+              value: total_price,
+              shipping: shipping_price,
+              tax: tax_price,
+              items,
+              coupon
+      });
+  })();
+</script>
+{% endif %}
